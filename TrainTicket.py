@@ -49,14 +49,16 @@ def get_all_tickets(params):
 	
 	try:
 		response = urllib2.urlopen(request, timeout = 10)
-		print time.time()
+		#print time.time()
 		json_string = response.read()
-		print time.time()
+		#print time.time()
 	except urllib2.HTTPError, e:
 		if isinstance(e.reason, socket.timeout):
 			print 'Time Out'
 			return list()
-		print e.code
+	except urllib2.URLError, e:
+		print 'URL Error'
+		return list()
 
 	json_data = json.loads(json_string)
 	results = json_data['data']
@@ -122,7 +124,12 @@ def print_tickets(tickets):
 		"zy_num": "--",		一等座
 		"swz_num": "--"		商务座
 	'''
+	no_tickets = u"没有符合要求的火车票"
 	platform_encoding = DetectCode.get_platform_encoding()
+
+	if (len(tickets) == 0):
+		print no_tickets.encode(platform_encoding)
+		return
 
 	from_station_max_len = 0
 	to_station_max_len = 0
@@ -133,8 +140,10 @@ def print_tickets(tickets):
 		from_station_max_len = from_station_max_len if from_station_max_len > from_station_len else from_station_len
 		to_station_max_len = to_station_max_len if to_station_max_len > to_station_len else to_station_len
 
-	from_station_basewidth = 7 + from_station_max_len * 2
-	to_station_basewidth = 7 + to_station_max_len * 2
+	multi = 2 if platform_encoding == 'utf-8' else 1
+
+	from_station_basewidth = 7 + from_station_max_len * multi
+	to_station_basewidth = 7 + to_station_max_len * multi
 
 	number = 0
 	for ticket in tickets:
@@ -189,8 +198,8 @@ def main():
 	purpose_codes_str = u'是否学生票(Y/N): '.encode(platform_encoding)
 	con_message = u'是否继续查询(Y/N) '.encode(platform_encoding)
 	error_message = {
-			'station_not_exist': u'该火车站不存在，请输入正确的'.encode(platform_encoding),
-			'date_format': u'日期格式错误，请重新输入'.encode(platform_encoding)
+		'station_not_exist': u'该火车站不存在，请输入正确的'.encode(platform_encoding),
+		'date_format': u'日期格式错误，请重新输入'.encode(platform_encoding)
 	}
 	input_tip =  u'请输入'.encode(platform_encoding)
 
@@ -201,7 +210,7 @@ def main():
 			from_station = from_station.decode(platform_encoding)
 			from_station_info = Validate.validate_station(from_station)
 			if from_station_info:
-					break
+				break
 			message = error_message['station_not_exist']
 
 		message = input_tip
@@ -210,22 +219,22 @@ def main():
 			to_station = to_station.decode(platform_encoding)
 			to_station_info = Validate.validate_station(to_station)
 			if to_station_info:
-					break
+				break
 			message = error_message['station_not_exist']
 
 		message = input_tip
 		while True:
-			train_date = raw_input(message +train_date_str)
+			train_date = raw_input(message + train_date_str)
 			train_date = train_date.decode(platform_encoding)
 			if (Validate.validate_date(train_date)):
-					break
+				break
 			message = error_message['date_format']
 		
 		while True:
 			purpose_codes = raw_input(purpose_codes_str)
 			purpose_codes = purpose_codes.decode(platform_encoding)
 			if purpose_codes in ['Y', 'y', 'N', 'n']:
-					break
+				break
 
 		if purpose_codes in ['y', 'Y']:
 			purpose_codes = '0X00'
@@ -247,7 +256,7 @@ def main():
 
 		con_message = raw_input(con_message)
 		if con_message not in['Y', 'y']:
-				break
+			break
 
 if __name__ == '__main__':
 	main()
