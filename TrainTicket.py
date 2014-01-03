@@ -140,10 +140,12 @@ def print_tickets(tickets):
 		from_station_max_len = from_station_max_len if from_station_max_len > from_station_len else from_station_len
 		to_station_max_len = to_station_max_len if to_station_max_len > to_station_len else to_station_len
 
-	multi = 2
+	base_chinese_len = len(u'汉'.encode(platform_encoding))	#	不同编码下一个汉字占的字节数
+	two_space_len = len('  ')								#	两个空格所占的字节数
+	base_time_len = len('(00:00)')							#	时间显示所占的字节数
 
-	from_station_basewidth = 7 + from_station_max_len * multi
-	to_station_basewidth = 7 + to_station_max_len * multi
+	from_station_base_len = base_time_len + from_station_max_len * base_chinese_len	#	计算最大字节数
+	to_station_base_len = base_time_len + to_station_max_len * base_chinese_len		#	计算最大字节数
 
 	number = 0
 	for ticket in tickets:
@@ -157,16 +159,20 @@ def print_tickets(tickets):
 		tmp_str = '%s(%s)' % (ticket['to_station_name'].encode(platform_encoding), ticket['arrive_time'].encode(platform_encoding))
 		out.append(tmp_str)
 		out.append(u'全程:(%s)'.encode(platform_encoding) % ticket['lishi'].encode(platform_encoding))
-
-		from_station_name_len = len(ticket['from_station_name']) + from_station_basewidth
-		to_station_name_len = len(ticket['to_station_name']) + to_station_basewidth
 		
-		if platform_encoding != 'utf-8':
-			from_station_name_len = from_station_basewidth
-			to_station_name_len = to_station_basewidth
+		'''
+			对于utf-8编码
+			汉字显示占2个空格的宽度，却占3个字节
+			也就是一个汉字占了3个空格的宽度，仅仅显示2个空格的宽度
+			那么，少输出1个汉字，控制输出宽度需要减少1
+			对于gbk编码
+			汉字显示占2个空格的宽度，只占2个字节，所以没有影响
+			下面是统一的计算方法
+		'''
+		from_station_name_len = from_station_base_len - (from_station_max_len - len(ticket['from_station_name'])) * (base_chinese_len - two_space_len)
+		to_station_name_len = to_station_base_len - (to_station_max_len - len(ticket['to_station_name'])) * (base_chinese_len - two_space_len)
 
 		format_str = '%%s%%-6s%%%ds -> %%%ds  %%s' % (from_station_name_len, to_station_name_len)
-
 		print format_str % tuple(out)
 
 
@@ -254,7 +260,7 @@ def main():
 		}
 		#print params
 		tickets = get_all_tickets(params)
-		#print_tickets(tickets)
+		print_tickets(tickets)
 		
 		canbuy_tickets = get_all_canbuy_tickets(tickets)
 		print_tickets(canbuy_tickets)
