@@ -140,7 +140,7 @@ def print_tickets(tickets):
 		from_station_max_len = from_station_max_len if from_station_max_len > from_station_len else from_station_len
 		to_station_max_len = to_station_max_len if to_station_max_len > to_station_len else to_station_len
 
-	multi = 2 if platform_encoding == 'utf-8' else 1
+	multi = 2
 
 	from_station_basewidth = 7 + from_station_max_len * multi
 	to_station_basewidth = 7 + to_station_max_len * multi
@@ -160,6 +160,11 @@ def print_tickets(tickets):
 
 		from_station_name_len = len(ticket['from_station_name']) + from_station_basewidth
 		to_station_name_len = len(ticket['to_station_name']) + to_station_basewidth
+		
+		if platform_encoding != 'utf-8':
+			from_station_name_len = from_station_basewidth
+			to_station_name_len = to_station_basewidth
+
 		format_str = '%%s%%-6s%%%ds -> %%%ds  %%s' % (from_station_name_len, to_station_name_len)
 
 		print format_str % tuple(out)
